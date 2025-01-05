@@ -1,0 +1,45 @@
+# Global settings
+global:
+  environment: development
+  namespace: scholar-spark-dev
+
+# Grafana configuration
+grafana:
+  enabled: true
+  adminPassword: admin  # Should be overridden in production
+  persistence:
+    enabled: true
+    size: 1Gi
+  datasources:
+    datasources.yaml:
+      apiVersion: 1
+      datasources:
+        - name: Tempo
+          type: tempo
+          url: http://tempo:3200
+        - name: Loki
+          type: loki
+          url: http://loki:3100
+
+# Tempo configuration
+tempo:
+  enabled: true
+  persistence:
+    enabled: true
+    size: 1Gi
+  receivers:
+    otlp:
+      protocols:
+        grpc:
+          endpoint: "0.0.0.0:4317"
+        http:
+          endpoint: "0.0.0.0:4318"
+
+# Loki configuration
+loki:
+  enabled: true
+  persistence:
+    enabled: true
+    size: 1Gi
+  config:
+    auth_enabled: false
