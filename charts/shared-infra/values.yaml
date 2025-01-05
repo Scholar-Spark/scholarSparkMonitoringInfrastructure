@@ -43,3 +43,7 @@ loki:
     size: 1Gi
   config:
     auth_enabled: false
+
+
+global:
+  environment: development

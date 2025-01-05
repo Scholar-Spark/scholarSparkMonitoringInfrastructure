@@ -1,0 +1,17 @@
+Thank you for installing {{ .Chart.Name }}.
+
+Your shared infrastructure has been deployed to namespace: {{ .Release.Namespace }}
+
+To access the services:
+
+1. Grafana:
+   kubectl port-forward svc/grafana 3000:3000 -n {{ .Release.Namespace }}
+   Then visit: http://localhost:3000
+
+2. Tempo:
+   kubectl port-forward svc/tempo 3200:3200 -n {{ .Release.Namespace }}
+   Endpoint: http://localhost:3200
+
+3. Loki:
+   kubectl port-forward svc/loki 3100:3100 -n {{ .Release.Namespace }}
+   Endpoint: http://localhost:3100
