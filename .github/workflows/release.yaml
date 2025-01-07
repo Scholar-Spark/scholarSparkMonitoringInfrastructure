@@ -35,7 +35,7 @@ jobs:
           
       - name: Push Chart
         run: |
-          helm push shared-infra-*.tgz oci://ghcr.io/${{ github.repository }}/charts
+          helm push shared-infra-*.tgz oci://ghcr.io/${GITHUB_REPOSITORY,,}/charts
           
       - name: Update Version
         if: success()
