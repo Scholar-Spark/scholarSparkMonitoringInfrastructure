@@ -62,3 +62,11 @@ helm install shared-infra charts/shared-infra
    - Package the chart
    - Push to GHCR
    - Create a new release
+
+### Update Development Manifest
+After releasing a new version, you must update the development manifest repository:
+
+1. Go to [Scholar Spark Dev Manifest](https://github.com/Polyhistor/scholarSparkDevManifest)
+2. Create a new branch
+3. Update the shared-infra chart version in the manifest
+4. Create a PR to update the version
