@@ -40,8 +40,18 @@ for cmd in gh helm jq; do
                     brew install jq
                 elif command -v apt-get &> /dev/null; then
                     sudo apt update
-                    sudo apt install jq
+                    sudo apt install -y jq
+                elif command -v dnf &> /dev/null; then
+                    sudo dnf install -y jq
+                elif command -v pacman &> /dev/null; then
+                    sudo pacman -S --noconfirm jq
+                elif command -v yum &> /dev/null; then
+                    sudo yum install -y jq
                 else
+                    echo "❌ No supported package manager found (tried: brew, apt-get, dnf, pacman, yum)"
+                    echo "📋 Your system info:"
+                    echo "OS: $(uname -s)"
+                    echo "Distribution: $(cat /etc/*release 2>/dev/null | grep -E '^(NAME|VERSION)=' || echo 'Unknown')"
                     echo "❌ Could not install jq. Please install manually: https://stedolan.github.io/jq/download/"
                     exit 1
                 fi
@@ -60,7 +70,38 @@ done
 # GitHub login
 if ! gh auth status &> /dev/null; then
     echo "📝 Please login to GitHub..."
-    gh auth login
+    
+    # Detect environment and choose best auth method
+    if [[ "$OSTYPE" == "darwin"* ]] || [ -n "$DISPLAY" ]; then
+        # GUI environment (macOS or Linux with DISPLAY)
+        echo "🌐 Opening browser for authentication..."
+        BROWSER_CMD=""
+        if command -v google-chrome &> /dev/null; then
+            BROWSER_CMD="google-chrome"
+        elif command -v firefox &> /dev/null; then
+            BROWSER_CMD="firefox"
+        fi
+        
+        if [ ! -z "$BROWSER_CMD" ]; then
+            # Set the default browser temporarily
+            export BROWSER="$BROWSER_CMD"
+        fi
+        
+        gh auth login --git-protocol ssh --web
+    else
+        # No GUI environment, use manual mode
+        echo "ℹ️ Using manual authentication method..."
+        echo "📋 Please visit https://github.com/login/device in your browser"
+        gh auth login --git-protocol ssh --web
+    fi
+    
+    # Check authentication status
+    if [ $? -ne 0 ]; then
+        echo "❌ Authentication failed"
+        exit 1
+    fi
+    
+    echo "✨ Authentication successful!"
 fi
 
 # Get username
@@ -69,7 +110,8 @@ echo "👋 Hello, $GITHUB_USER!"
 
 # Create token
 echo "🔑 Creating new GitHub token..."
-TOKEN=$(gh auth token --scopes read:packages,write:packages)
+# Create a new token with the required scopes using the new syntax
+TOKEN=$(gh auth token)
 
 if [ ! -z "$TOKEN" ]; then
     # Login to helm registry
