@@ -18,14 +18,14 @@ data:
     schema_config:
       configs:
         - from: 2020-05-15
-          store: boltdb
+          store: tsdb
           object_store: filesystem
-          schema: v11
+          schema: v13
           index:
             prefix: index_
             period: 24h
     storage_config:
-      boltdb:
+      tsdb:
         directory: /tmp/loki/index
       filesystem:
         directory: /tmp/loki/chunks
