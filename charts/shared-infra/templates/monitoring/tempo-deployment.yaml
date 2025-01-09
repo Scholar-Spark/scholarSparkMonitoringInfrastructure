@@ -1,19 +1,17 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: loki
+  name: tempo
   namespace: {{ .Release.Namespace }}
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: loki
-  strategy:
-    type: Recreate
+      app: tempo
   template:
     metadata:
       labels:
-        app: loki
+        app: tempo
     spec:
       terminationGracePeriodSeconds: 60
       tolerations:
@@ -26,13 +24,14 @@ spec:
           effect: "NoExecute"
           tolerationSeconds: 300
       containers:
-        - name: loki
-          image: grafana/loki:2.9.0
+        - name: tempo
+          image: grafana/tempo:2.3.0  # Specific version instead of latest
           args:
-            - -config.file=/etc/loki/loki.yaml
+            - -config.file=/etc/tempo/tempo.yaml
           ports:
-            - containerPort: 3100
-              name: http
+            - containerPort: 3200
+            - containerPort: 4317
+            - containerPort: 4318
           resources:
             requests:
               memory: "256Mi"
@@ -42,12 +41,12 @@ spec:
               cpu: "200m"
           volumeMounts:
             - name: config
-              mountPath: /etc/loki
+              mountPath: /etc/tempo
             - name: data
-              mountPath: /tmp/loki
+              mountPath: /tmp/tempo
       volumes:
         - name: config
           configMap:
-            name: loki-config
+            name: tempo-config
         - name: data
           emptyDir: {} 

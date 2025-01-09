@@ -129,223 +129,178 @@ check_cluster_health() {
     return 0
 }
 
+# Add this function
+pre_pull_images() {
+    echo "📥 Pre-pulling images..."
+    
+    # Pull images first
+    echo "Pulling Loki image..."
+    docker pull grafana/loki:2.9.0
+    
+    echo "Pulling Tempo image..."
+    docker pull grafana/tempo:2.3.0
+    
+    echo "Pulling Grafana image..."
+    docker pull grafana/grafana:10.2.0
+    
+    # Load images into kind
+    echo "Loading images into kind cluster..."
+    kind load docker-image grafana/loki:2.9.0 --name chart-testing
+    kind load docker-image grafana/tempo:2.3.0 --name chart-testing
+    kind load docker-image grafana/grafana:10.2.0 --name chart-testing
+}
+
+# Add this function
+wait_for_pods() {
+    local namespace=$1
+    local timeout=$2
+    local interval=5
+    local elapsed=0
+
+    echo "⏳ Waiting for pods in namespace $namespace to be ready..."
+    while true; do
+        if [ $elapsed -gt $timeout ]; then
+            echo "❌ Timeout waiting for pods to be ready"
+            kubectl get pods -n $namespace
+            kubectl describe pods -n $namespace
+            return 1
+        fi
+
+        if kubectl get pods -n $namespace | grep -q "ContainerCreating\|PodInitializing"; then
+            echo "⏳ Pods still initializing... ($elapsed/${timeout}s)"
+            sleep $interval
+            elapsed=$((elapsed + interval))
+            continue
+        fi
+
+        if kubectl get pods -n $namespace | grep -q "Error\|CrashLoopBackOff"; then
+            echo "❌ Pod(s) in error state"
+            kubectl get pods -n $namespace
+            kubectl describe pods -n $namespace
+            return 1
+        fi
+
+        if kubectl get pods -n $namespace | grep -v "Running\|Completed" | grep -q .; then
+            echo "⏳ Waiting for pods to be ready... ($elapsed/${timeout}s)"
+            sleep $interval
+            elapsed=$((elapsed + interval))
+            continue
+        fi
+
+        echo "✅ All pods are ready!"
+        return 0
+    done
+}
+
 echo "🔧 Setting up test environment..."
 
-# Check if cluster exists and is healthy
-if kind get clusters | grep -q "chart-testing"; then
-    if ! check_cluster_health "chart-testing"; then
-        echo "Creating new cluster..."
-        kind create cluster --name chart-testing
-    else
-        echo "Using existing healthy cluster..."
-    fi
-else
-    echo "Creating new cluster..."
+# Create kind cluster if it doesn't exist
+if ! kind get clusters | grep -q "chart-testing"; then
+    echo "Creating kind cluster..."
     kind create cluster --name chart-testing
+else
+    echo "Using existing kind cluster..."
+    # Add cleanup of existing deployments
+    echo "🧹 Cleaning up existing deployments..."
+    kubectl delete deployment,service,configmap,secret -n test-infra --all --ignore-not-found=true
+    # Wait for resources to be deleted
+    kubectl wait --for=delete deployment --all -n test-infra --timeout=2m || true
 fi
 
-# Verify cluster is ready
-echo "⏳ Waiting for cluster to be ready..."
-for i in {1..30}; do
-    if kubectl cluster-info &> /dev/null; then
-        echo "✅ Cluster is ready!"
-        break
-    fi
-    if [ $i -eq 30 ]; then
-        echo "❌ Cluster failed to start"
-        exit 1
-    fi
-    echo "⏳ Waiting for cluster to be ready... ($i/30)"
-    sleep 2
-done
+# Pre-pull images
+pre_pull_images
 
-# Set kubectl context
-kubectl cluster-info --context kind-chart-testing
+echo "⏳ Waiting for node to be ready..."
+kubectl wait --for=condition=ready nodes --all --timeout=5m || {
+    echo "❌ Node failed to become ready"
+    kubectl get nodes -o wide
+    kubectl describe nodes
+    exit 1
+}
 
 echo "🔄 Installing chart..."
 # Create namespace
 kubectl create namespace test-infra --dry-run=client -o yaml | kubectl apply -f -
 
-# Install/upgrade chart with longer timeout and debug info
-echo "📦 Installing chart (this may take a few minutes)..."
-echo "🧹 Cleaning up any stuck releases..."
-kubectl delete secret -n test-infra --field-selector type=helm.sh/release.v1 || true
-
-cleanup_previous_install() {
-    echo "🧹 Cleaning up previous installation..."
-    
-    # Delete deployments first
-    kubectl delete deployment -n test-infra --all --timeout=2m || true
-    
-    # Delete the release secret
-    kubectl delete secret -n test-infra --field-selector type=helm.sh/release.v1 || true
-    
-    # Wait for resources to be deleted
-    echo "⏳ Waiting for resources to be cleaned up..."
-    kubectl wait --for=delete deployment --all -n test-infra --timeout=2m || true
-    
-    # Force delete if still exists
-    kubectl delete deployment -n test-infra --all --force --grace-period=0 || true
-}
-
-# Add this before helm upgrade
-cleanup_previous_install
-
+# Install/upgrade chart
 helm upgrade --install shared-infra ./charts/shared-infra \
     --namespace test-infra \
     --wait \
     --timeout 10m \
-    --debug \
-    --atomic || {
-        echo "❌ Chart installation failed. Checking pod status..."
-        kubectl get pods -n test-infra
-        echo "📝 Checking pod events..."
+    --atomic \
+    --debug || {
+        echo "❌ Chart installation failed. Getting diagnostics..."
+        kubectl get pods -n test-infra -o wide
         kubectl get events -n test-infra --sort-by='.lastTimestamp'
+        kubectl describe pods -n test-infra
         exit 1
     }
 
-# Add readiness check
-echo "⏳ Waiting for pods to be ready..."
-kubectl wait --for=condition=ready pods --all -n test-infra --timeout=5m || {
-    echo "❌ Pods failed to become ready. Checking status..."
-    kubectl get pods -n test-infra
-    echo "📝 Checking pod events..."
-    kubectl get events -n test-infra --sort-by='.lastTimestamp'
-    exit 1
-}
-
-echo "🔍 Validating deployment..."
-# Check pod status
-kubectl get pods -n test-infra -w &
-WATCH_PID=$!
-
 # Wait for pods to be ready
-sleep 30
-kill $WATCH_PID
-
-# Validate services
-echo "📝 Checking Loki logs..."
-kubectl logs -n test-infra deployment/loki --tail=50
-
-echo "📝 Checking Tempo logs..."
-kubectl logs -n test-infra deployment/tempo --tail=50
-
-echo "📝 Checking Grafana logs..."
-kubectl logs -n test-infra deployment/grafana --tail=50
-
-# Add after cluster is ready
-echo "🔑 Getting dashboard access token..."
-kubectl -n test-infra create token admin-user
-
-# Optional cleanup
-read -p "❓ Do you want to cleanup the test environment? (y/n) " -n 1 -r
-echo
-if [[ $REPLY =~ ^[Yy]$ ]]
-then
-    echo "🧹 Cleaning up..."
-    helm uninstall shared-infra -n test-infra
-    kubectl delete namespace test-infra
-    kind delete cluster --name chart-testing
+if ! wait_for_pods "test-infra" 300; then
+    echo "❌ Pods failed to become ready"
+    exit 1
 fi
 
-# After cluster creation, add:
-echo "🔑 Setting up API server access..."
+echo "✅ Installation complete!"
+kubectl get pods -n test-infra 
 
-# Get the client certificate data
-CLIENT_CERT=$(kind get kubeconfig --name chart-testing | grep client-certificate-data | awk '{print $2}')
-CLIENT_KEY=$(kind get kubeconfig --name chart-testing | grep client-key-data | awk '{print $2}')
-CA_CERT=$(kind get kubeconfig --name chart-testing | grep certificate-authority-data | awk '{print $2}')
+verify_deployment() {
+    local deployment=$1
+    local namespace=$2
+    local timeout=$3
 
-# Create a directory for certificates
-mkdir -p ~/.kind/certs
-echo $CLIENT_CERT | base64 -d > ~/.kind/certs/client.crt
-echo $CLIENT_KEY | base64 -d > ~/.kind/certs/client.key
-echo $CA_CERT | base64 -d > ~/.kind/certs/ca.crt
+    echo "🔍 Verifying deployment: $deployment"
+    
+    # Wait for deployment rollout
+    if ! kubectl rollout status deployment/$deployment -n $namespace --timeout=$timeout; then
+        echo "❌ Deployment $deployment failed to roll out"
+        kubectl describe deployment $deployment -n $namespace
+        kubectl get pods -n $namespace -l app=$deployment
+        kubectl logs -n $namespace -l app=$deployment --previous
+        return 1
+    fi
 
-echo "
-🌐 To access the Kubernetes API directly:
+    # Check pod status
+    local pod=$(kubectl get pod -n $namespace -l app=$deployment -o jsonpath='{.items[0].metadata.name}')
+    if [[ -z "$pod" ]]; then
+        echo "❌ No pod found for deployment $deployment"
+        return 1
+    fi
 
-Use these certificates with curl:
-curl --cert ~/.kind/certs/client.crt \\
-     --key ~/.kind/certs/client.key \\
-     --cacert ~/.kind/certs/ca.crt \\
-     https://127.0.0.1:46429/api/v1/namespaces
-
-Or use this kubectl command:
-kubectl --certificate-authority=~/.kind/certs/ca.crt \\
-        --client-certificate=~/.kind/certs/client.crt \\
-        --client-key=~/.kind/certs/client.key \\
-        --server=https://127.0.0.1:46429 \\
-        get pods -A
-
-For browser access, you can:
-1. Run: kubectl proxy
-2. Visit: http://localhost:8001/api/v1/namespaces/kubernetes-dashboard/services/https:kubernetes-dashboard:/proxy/
-"
-
-# Clean up function
-cleanup_certs() {
-    echo "🧹 Cleaning up certificates..."
-    rm -rf ~/.kind/certs
+    # Check pod logs
+    echo "📝 Logs for $deployment:"
+    kubectl logs $pod -n $namespace
 }
 
-# Add cleanup_certs to your existing cleanup section 
+# After helm install
+echo "🔍 Verifying deployments..."
+verify_deployment "grafana" "test-infra" "5m" || exit 1
+verify_deployment "loki" "test-infra" "5m" || exit 1
+verify_deployment "tempo" "test-infra" "5m" || exit 1
 
-# Add after helm upgrade command
-if [ $? -ne 0 ]; then
-    echo "❌ Chart installation failed. Getting detailed diagnostics..."
-    
-    echo "📝 Checking Loki logs..."
-    kubectl logs -n test-infra deployment/loki --tail=50
-    
-    echo "📝 Checking Tempo logs..."
-    kubectl logs -n test-infra deployment/tempo --tail=50
-    
-    echo "📝 Checking Grafana logs..."
-    kubectl logs -n test-infra deployment/grafana --tail=50
-    
-    echo "📝 Checking pod status..."
-    kubectl get pods -n test-infra
-    
-    echo "📝 Checking events..."
-    kubectl get events -n test-infra --sort-by='.lastTimestamp'
-    
-    exit 1
-fi 
+echo "✅ All deployments verified successfully!"
 
-# Add this function after the cluster setup
-check_loki_status() {
-    echo "🔍 Checking Loki status..."
-    
-    # Get pod name
-    LOKI_POD=$(kubectl get pod -n test-infra -l app=loki -o jsonpath='{.items[0].metadata.name}')
-    
-    echo "📝 Loki Pod Status:"
-    kubectl describe pod -n test-infra $LOKI_POD
-    
-    echo "📝 Loki Logs:"
-    kubectl logs -n test-infra $LOKI_POD --previous
-    kubectl logs -n test-infra $LOKI_POD
-    
-    echo "📝 Checking Loki ConfigMap:"
-    kubectl get configmap -n test-infra loki-config -o yaml
-    
-    echo "📝 Checking Events:"
-    kubectl get events -n test-infra --sort-by='.lastTimestamp' | grep Loki
-}
+# Add final health check
+echo "🔍 Performing final health check..."
 
-# Add this call after helm upgrade
-if ! kubectl rollout status deployment/loki -n test-infra --timeout=2m; then
-    echo "❌ Loki deployment failed to roll out"
-    check_loki_status
-    exit 1
-fi 
+# Check all pods are running
+if ! kubectl get pods -n test-infra | grep -v "Running\|Completed" | grep -q .; then
+    # Check all services are present
+    if kubectl get services -n test-infra | grep -q "grafana\|loki\|tempo"; then
+        # Check endpoints are available
+        if kubectl get endpoints -n test-infra | grep -q "grafana\|loki\|tempo"; then
+            echo "🎉 All systems operational!"
+            echo "✨ Test completed successfully - all resources are healthy and running"
+            echo ""
+            echo "==============================================="
+            echo "✅ SUCCESS: All tests passed successfully! ✅"
+            echo "==============================================="
+            exit 0
+        fi
+    fi
+fi
 
-# Add after cluster creation
-echo "⏳ Waiting for nodes to be ready..."
-kubectl wait --for=condition=ready nodes --all --timeout=2m || {
-    echo "❌ Nodes failed to become ready"
-    kubectl get nodes
-    kubectl describe nodes
-    exit 1
-} 
+echo "❌ Final health check failed - some resources are not in the expected state"
+kubectl get all -n test-infra
+exit 1 

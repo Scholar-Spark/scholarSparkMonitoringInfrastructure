@@ -1,0 +1,15 @@
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: monitoring-pdb
+  namespace: {{ .Release.Namespace }}
+spec:
+  minAvailable: 1
+  selector:
+    matchExpressions:
+      - key: app
+        operator: In
+        values:
+          - loki
+          - grafana
+          - tempo 

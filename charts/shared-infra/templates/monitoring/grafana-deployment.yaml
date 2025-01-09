@@ -1,19 +1,17 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: loki
+  name: grafana
   namespace: {{ .Release.Namespace }}
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: loki
-  strategy:
-    type: Recreate
+      app: grafana
   template:
     metadata:
       labels:
-        app: loki
+        app: grafana
     spec:
       terminationGracePeriodSeconds: 60
       tolerations:
@@ -26,12 +24,10 @@ spec:
           effect: "NoExecute"
           tolerationSeconds: 300
       containers:
-        - name: loki
-          image: grafana/loki:2.9.0
-          args:
-            - -config.file=/etc/loki/loki.yaml
+        - name: grafana
+          image: grafana/grafana:10.2.0  # Specific version instead of latest
           ports:
-            - containerPort: 3100
+            - containerPort: 3000
               name: http
           resources:
             requests:
@@ -41,13 +37,8 @@ spec:
               memory: "512Mi"
               cpu: "200m"
           volumeMounts:
-            - name: config
-              mountPath: /etc/loki
             - name: data
-              mountPath: /tmp/loki
+              mountPath: /var/lib/grafana
       volumes:
-        - name: config
-          configMap:
-            name: loki-config
         - name: data
           emptyDir: {} 

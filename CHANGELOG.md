@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.1.7] - 2024-01-10
+### Added
+- Enhanced test script with improved deployment verification
+- Added pre-pull function for container images
+- Added comprehensive pod readiness checks
+- Improved final health check verification
+- Added clear success/failure messaging for test results
+
 ## [0.1.6] - 2024-01-09
 ### Fixed
 - Fixed Loki configuration causing CrashLoopBackOff

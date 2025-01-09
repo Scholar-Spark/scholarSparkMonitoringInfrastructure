@@ -37,13 +37,20 @@ spec:
     spec:
       containers:
         - name: tempo
-          image: grafana/tempo:latest
+          image: grafana/tempo:2.3.0
+          args:
+            - -config.file=/etc/tempo/tempo.yaml
           ports:
             - containerPort: 3200
             - containerPort: 4317
             - containerPort: 4318
-          args:
-            - -config.file=/etc/tempo/tempo.yaml
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "256Mi"
+              cpu: "200m"
           volumeMounts:
             - name: tempo-config
               mountPath: /etc/tempo
