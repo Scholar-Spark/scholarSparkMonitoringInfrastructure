@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.1.8] - 2024-01-10
+### Changed
+- Refactored test script to be more generic and maintainable
+- Improved template validation process
+- Added Kubernetes schema validation for templates
+- Added checks for common template issues
+- Removed hardcoded component checks for better maintainability
+
 ## [0.1.7] - 2024-01-10
 ### Added
 - Enhanced test script with improved deployment verification
