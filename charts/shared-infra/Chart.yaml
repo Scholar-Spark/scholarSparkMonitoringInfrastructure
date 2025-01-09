@@ -2,5 +2,5 @@ apiVersion: v2
 name: shared-infra
 description: Shared Infrastructure for Scholar Spark Development Environment
 type: application
-version: 0.1.2
+version: 0.1.6
 appVersion: "1.0.0"
