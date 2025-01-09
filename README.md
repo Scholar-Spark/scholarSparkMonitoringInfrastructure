@@ -70,3 +70,10 @@ After releasing a new version, you must update the development manifest reposito
 2. Create a new branch
 3. Update the shared-infra chart version in the manifest
 4. Create a PR to update the version
+
+
+
+## Testing
+
+### Automated Testing
+Use the script to test the chart in a local kind cluster:
