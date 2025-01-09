@@ -11,4 +11,6 @@ Common labels
 {{- define "shared-infra.labels" -}}
 helm.sh/chart: {{ include "shared-infra.chart" . }}
 app.kubernetes.io/managed-by: {{ .Release.Service }}
+app.kubernetes.io/instance: {{ .Release.Name }}
+app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
 {{- end }}

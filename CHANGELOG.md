@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.1.11] - 2024-01-10
+### Fixed
+- Added missing Helm labels to all resources
+- Fixed label consistency across deployments
+- Updated helper template with complete label set
+- Improved resource tracking and management
+
+## [0.1.10] - 2024-01-10
+### Fixed
+- Added missing Tempo ConfigMap configuration
+- Fixed Tempo deployment dependency issues
+
 ## [0.1.9] - 2024-01-10
 ### Fixed
 - Fixed missing ConfigMap dependency validation in test script

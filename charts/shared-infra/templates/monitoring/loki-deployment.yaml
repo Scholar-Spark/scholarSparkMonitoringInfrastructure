@@ -3,6 +3,8 @@ kind: Deployment
 metadata:
   name: loki
   namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "shared-infra.labels" . | nindent 4 }}
 spec:
   replicas: 1
   selector:
@@ -13,6 +15,7 @@ spec:
   template:
     metadata:
       labels:
+        {{- include "shared-infra.labels" . | nindent 8 }}
         app: loki
     spec:
       terminationGracePeriodSeconds: 60

@@ -3,6 +3,8 @@ kind: ConfigMap
 metadata:
   name: loki-config
   namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "shared-infra.labels" . | nindent 4 }}
 data:
   loki.yaml: |
     auth_enabled: false
