@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.9] - 2024-01-10
+### Fixed
+- Fixed missing ConfigMap dependency validation in test script
+- Added comprehensive resource dependency checks
+- Improved error handling and validation in test script
+- Added prerequisite checks for required tools
+
 ## [0.1.8] - 2024-01-10
 ### Changed
 - Refactored test script to be more generic and maintainable
