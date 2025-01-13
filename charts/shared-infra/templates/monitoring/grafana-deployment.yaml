@@ -16,7 +16,7 @@ spec:
         {{- include "shared-infra.labels" . | nindent 8 }}
         app: grafana
     spec:
-      terminationGracePeriodSeconds: 60
+      terminationGracePeriodSeconds: 59
       tolerations:
         - key: "node.kubernetes.io/not-ready"
           operator: "Exists"
