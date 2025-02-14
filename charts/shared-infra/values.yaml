@@ -6,7 +6,7 @@ global:
 # Grafana configuration
 grafana:
   enabled: true
-  adminPassword: admin  # Should be overridden in production
+  adminPassword: admin # Should be overridden in production
   persistence:
     enabled: true
     size: 1Gi
@@ -44,6 +44,16 @@ loki:
   config:
     auth_enabled: false
 
-
-global:
-  environment: development
+# Vault configuration
+vault:
+  enabled: true
+  server:
+    dev:
+      enabled: ${eq .Values.global.environment "development"}
+    ha:
+      enabled: ${eq .Values.global.environment "production"}
+    injector:
+      enabled: true
+    auth:
+      kubernetes:
+        enabled: true

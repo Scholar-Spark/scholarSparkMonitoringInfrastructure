@@ -1,0 +1,48 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vault
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "shared-infra.labels" . | nindent 4 }}
+spec:
+  replicas: {{ if eq .Values.global.environment "production" }}3{{ else }}1{{ end }}
+  selector:
+    matchLabels:
+      app: vault
+  template:
+    metadata:
+      labels:
+        {{- include "shared-infra.labels" . | nindent 8 }}
+        app: vault
+    spec:
+      serviceAccountName: vault
+      containers:
+        - name: vault
+          image: vault:1.13.3
+          ports:
+            - containerPort: 8200
+              name: http
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "200m"
+          volumeMounts:
+            - name: config
+              mountPath: /vault/config
+            - name: data
+              mountPath: /vault/data
+      volumes:
+        - name: config
+          configMap:
+            name: vault-config
+        - name: data
+          {{- if .Values.vault.persistence.enabled }}
+          persistentVolumeClaim:
+            claimName: vault-data
+          {{- else }}
+          emptyDir: {}
+          {{- end }}
