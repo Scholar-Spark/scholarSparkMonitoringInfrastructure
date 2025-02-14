@@ -57,3 +57,5 @@ vault:
     auth:
       kubernetes:
         enabled: true
+  persistence:
+    enabled: true

@@ -2,8 +2,8 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: vault-config
-  namespace: { { .Release.Namespace } }
-  labels: { { - include "shared-infra.labels" . | nindent 4 } }
+  namespace: {{ .Release.Namespace }}
+  labels: {{- include "shared-infra.labels" . | nindent 4 }}
 data:
   vault.hcl: |
     {{- if eq .Values.global.environment "development" }}

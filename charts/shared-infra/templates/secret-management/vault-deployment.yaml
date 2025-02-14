@@ -40,7 +40,7 @@ spec:
           configMap:
             name: vault-config
         - name: data
-          {{- if .Values.vault.persistence.enabled }}
+          {{- if and .Values.vault.persistence (eq .Values.vault.persistence.enabled true) }}
           persistentVolumeClaim:
             claimName: vault-data
           {{- else }}
