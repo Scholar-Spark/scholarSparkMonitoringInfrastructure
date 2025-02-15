@@ -59,3 +59,13 @@ vault:
         enabled: true
   persistence:
     enabled: true
+
+serviceAccounts:
+  default:
+    create: true
+    name: "scholar-spark-service"
+    annotations: {}
+    permissions:
+      - secrets
+      - metrics
+      - logs

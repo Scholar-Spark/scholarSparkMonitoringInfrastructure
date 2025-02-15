@@ -2,8 +2,8 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: vault-config
-  namespace: {{ .Release.Namespace }}
-  labels: {{- include "shared-infra.labels" . | nindent 4 }}
+  namespace: { { .Release.Namespace } }
+  labels: { { - include "shared-infra.labels" . | nindent 4 } }
 data:
   vault.hcl: |
     {{- if eq .Values.global.environment "development" }}
@@ -28,5 +28,12 @@ data:
     seal "awskms" {
       region     = "{{ .Values.vault.seal.region }}"
       kms_key_id = "{{ .Values.vault.seal.keyId }}"
+    }
+    auth "kubernetes" {
+      role "scholar-spark-service" {
+        bound_service_account_names = ["scholar-spark-service"]
+        bound_service_account_namespaces = ["*"]  # Or specific namespaces
+        policies = ["default", "scholar-spark-policy"]
+      }
     }
     {{- end }}
