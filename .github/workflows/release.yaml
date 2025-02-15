@@ -5,8 +5,8 @@ on:
     branches:
       - master
     paths:
-      - 'charts/**'
-      - '.github/workflows/release.yaml'
+      - "charts/**"
+      - ".github/workflows/release.yaml"
 
 jobs:
   release:
@@ -14,29 +14,40 @@ jobs:
     permissions:
       contents: read
       packages: write
-    
+
     steps:
       - name: Checkout
         uses: actions/checkout@v3
-        
+        with:
+          fetch-depth: 0 # Important for getting git history
+
       - name: Install Helm
         uses: azure/setup-helm@v3
-        
+
       - name: Login to GHCR
         uses: docker/login-action@v2
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-          
+
+      - name: Configure Git
+        run: |
+          git config user.name "$GITHUB_ACTOR"
+          git config user.email "$GITHUB_ACTOR@users.noreply.github.com"
+
       - name: Package Chart
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           helm package charts/shared-infra
-          
+
       - name: Push Chart
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           helm push shared-infra-*.tgz oci://ghcr.io/${GITHUB_REPOSITORY,,}/charts
-          
+
       - name: Update Version
         if: success()
         run: |
