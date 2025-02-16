@@ -1,5 +1,24 @@
 # Changelog
 
+## [0.2.0] - 2024-02-15
+
+### Added
+
+- Added Gateway API support with CRD installation
+- Added automated CRD installation in test pipeline
+- Added Gateway resource validation in test script
+
+### Fixed
+
+- Fixed test script to handle Gateway API dependencies
+- Fixed CRD installation order in validation pipeline
+
+## [0.1.17] - 2024-02-15
+
+### Fixed
+
+- Fixed template syntax in vault-config.yaml by removing spaces between curly braces
+
 ## [0.1.16] - 2024-02-15
 
 ### Fixed

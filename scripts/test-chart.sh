@@ -31,6 +31,13 @@ create_cluster() {
     fi
 }
 
+# Install required CRDs
+install_crds() {
+    echo "📋 Installing required CRDs..."
+    # Install Gateway API CRDs
+    kubectl apply -f https://raw.githubusercontent.com/kubernetes-sigs/gateway-api/v0.8.0/config/crd/standard/gateway.networking.k8s.io_gateways.yaml
+}
+
 # Validate templates and dependencies
 validate_templates() {
     echo -e "\n📋 Step 1: Validating chart structure..."
@@ -122,6 +129,7 @@ check_template_issues() {
 check_prerequisites
 cleanup_existing
 create_cluster
+install_crds
 validate_templates
 check_dependencies
 check_template_issues
