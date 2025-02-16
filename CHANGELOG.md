@@ -1,5 +1,25 @@
 # Changelog
 
+## [0.4.0] - 2024-02-16
+
+### Changed
+
+- Refactored Gateway API implementation to use Helm dependencies instead of raw manifests
+- Improved CRD management for better cluster-wide resource handling
+- Enhanced installation reliability with proper dependency ordering
+
+### Added
+
+- Added Gateway API as an official Helm dependency
+- Added explicit version control for Gateway API components
+- Added proper CRD installation handling through Helm dependencies
+
+### Fixed
+
+- Fixed Gateway API installation order issues
+- Fixed potential race conditions during CRD installation
+- Fixed cross-namespace resource management for Gateway API
+
 ## [0.3.0] - 2024-02-15
 
 ### Added

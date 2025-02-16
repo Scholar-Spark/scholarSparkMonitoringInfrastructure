@@ -81,3 +81,7 @@ serviceAccounts:
       - secrets
       - metrics
       - logs
+
+gateway-api:
+  enabled: true
+  crds: true  # Ensures CRDs are installed
