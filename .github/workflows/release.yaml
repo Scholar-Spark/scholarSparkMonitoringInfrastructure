@@ -36,11 +36,16 @@ jobs:
           git config user.name "$GITHUB_ACTOR"
           git config user.email "$GITHUB_ACTOR@users.noreply.github.com"
 
-      - name: Package Chart
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Add Helm repositories
         run: |
-          helm package charts/shared-infra
+          helm repo add gateway-api oci://ghcr.io/kubernetes-sigs/gateway-api
+          helm repo update
+
+      - name: Update Helm dependencies
+        run: helm dependency update charts/shared-infra
+
+      - name: Package Helm chart
+        run: helm package charts/shared-infra
 
       - name: Push Chart
         env:
