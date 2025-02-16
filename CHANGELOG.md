@@ -4,9 +4,9 @@
 
 ### Fixed
 
-- Removed invalid Gateway API Helm dependency
-- Updated to use direct CRD installation instead of Helm charts
-- Fixed Gateway API installation method
+- Updated Gateway API CRD installation to use official v1.2.0 release
+- Switched to standard channel installation for Gateway API
+- Removed invalid Helm dependency approach for Gateway API
 
 ## [0.4.0] - 2024-02-16
 
