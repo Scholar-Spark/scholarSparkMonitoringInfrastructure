@@ -44,6 +44,10 @@ jobs:
       - name: Update Helm dependencies
         run: helm dependency update charts/shared-infra
 
+      - name: Install Gateway API CRDs
+        run: |
+          kubectl apply -f https://raw.githubusercontent.com/kubernetes-sigs/gateway-api/v0.8.0/config/crd/standard/gateway.networking.k8s.io_gateways.yaml
+
       - name: Package Helm chart
         run: helm package charts/shared-infra
 

@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.4.1] - 2024-02-16
+
+### Fixed
+
+- Removed invalid Gateway API Helm dependency
+- Updated to use direct CRD installation instead of Helm charts
+- Fixed Gateway API installation method
+
 ## [0.4.0] - 2024-02-16
 
 ### Changed
