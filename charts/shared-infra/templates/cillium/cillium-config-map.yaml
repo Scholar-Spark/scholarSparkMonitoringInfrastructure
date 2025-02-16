@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cilium-config
+  namespace: {{ .Release.Namespace }}
+  labels: {{- include "shared-infra.labels" . | nindent 4 }}
+data:
+  config.yaml: |
+    hubble:
+      enabled: {{ .Values.cilium.hubble.enabled }}
+    ingressController:
+      enabled: {{ .Values.cilium.ingressController.enabled }}
+    kubeProxyReplacement: "strict"
+    k8sServiceHost: "kubernetes.default.svc"
+    k8sServicePort: "443"

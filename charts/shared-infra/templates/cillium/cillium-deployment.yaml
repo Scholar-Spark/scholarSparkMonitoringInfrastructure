@@ -1,0 +1,28 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cilium
+  namespace: {{ .Release.Namespace }}
+  labels: {{- include "shared-infra.labels" . | nindent 4 }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: cilium
+  template:
+    metadata:
+      labels:
+        {{- include "shared-infra.labels" . | nindent 8 }}
+        app: cilium
+    spec:
+      serviceAccountName: cilium
+      containers:
+        - name: cilium
+          image: quay.io/cilium/cilium:v1.14.5
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "200m"

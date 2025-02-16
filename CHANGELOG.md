@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.3.0] - 2024-02-15
+
+### Added
+
+- Added Cilium as a managed component with dedicated manifests
+- Added Cilium configuration management
+- Added Cilium service account and RBAC
+
 ## [0.2.0] - 2024-02-15
 
 ### Added
