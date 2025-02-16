@@ -3,6 +3,9 @@ kind: ClusterRole
 metadata:
   name: scholar-spark-service-role
   labels: {{- include "shared-infra.labels" . | nindent 4 }}
+  annotations:
+    meta.helm.sh/release-namespace: {{ .Release.Namespace }}
+    meta.helm.sh/release-name: {{ .Release.Name }}
 rules:
   - apiGroups: [""]
     resources: ["secrets"]
