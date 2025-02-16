@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.1.16] - 2024-02-15
+
+### Fixed
+
+- Fixed syntax error in ClusterRole YAML configuration
+
 ## [0.1.15] - 2024-02-15
 
 ### Added
