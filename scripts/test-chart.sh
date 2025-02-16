@@ -36,6 +36,9 @@ install_crds() {
     echo "📋 Installing required CRDs..."
     # Install Gateway API CRDs (standard channel)
     kubectl apply -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.2.0/standard-install.yaml
+    # Wait for CRDs to be ready
+    echo "📋 Waiting for CRDs to be established..."
+    kubectl wait --for=condition=established --timeout=60s crd/gateways.gateway.networking.k8s.io
 }
 
 # Validate templates and dependencies
@@ -126,12 +129,16 @@ check_template_issues() {
 }
 
 # Main execution
-check_prerequisites
-cleanup_existing
-create_cluster
-install_crds
-validate_templates
-check_dependencies
-check_template_issues
+main() {
+    check_prerequisites
+    cleanup_existing
+    create_cluster
+    install_crds
+    
+    echo "📋 Installing Helm chart..."
+    helm install shared-infra charts/shared-infra
+}
+
+main
 
 echo -e "\n✅ All validations passed successfully!" 
