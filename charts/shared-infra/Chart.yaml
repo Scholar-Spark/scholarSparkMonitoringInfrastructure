@@ -8,5 +8,5 @@ appVersion: "1.1.0"
 dependencies:
   - name: gateway-api
     version: "0.8.0"
-    repository: "oci://ghcr.io/kubernetes-sigs/gateway-api"
+    repository: "https://kubernetes-sigs.github.io/gateway-api"
     condition: gateway-api.enabled
