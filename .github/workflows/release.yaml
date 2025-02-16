@@ -38,7 +38,7 @@ jobs:
 
       - name: Add Helm repositories
         run: |
-          helm repo add gateway-api https://kubernetes-sigs.github.io/gateway-api
+          helm repo add gateway-api https://kubernetes-sigs.github.io/gateway-api/charts
           helm repo update
 
       - name: Update Helm dependencies
