@@ -3,6 +3,18 @@ global:
   environment: development
   namespace: scholar-spark-dev
 
+cilium:
+  enabled: true
+  hubble:
+    enabled: true  # For observability
+  loadBalancer:
+    enabled: true
+  ingressController:
+    enabled: true
+    defaultSecretName: scholar-spark-tls
+    service:
+      type: LoadBalancer
+
 # Grafana configuration
 grafana:
   enabled: true
