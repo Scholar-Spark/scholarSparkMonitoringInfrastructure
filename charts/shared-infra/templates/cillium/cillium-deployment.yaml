@@ -16,9 +16,25 @@ spec:
         app: cilium
     spec:
       serviceAccountName: cilium
+      hostNetwork: true
       containers:
         - name: cilium
           image: quay.io/cilium/cilium:v1.14.5
+          securityContext:
+            privileged: true
+            capabilities:
+              add:
+                - NET_ADMIN
+                - NET_RAW
+          volumeMounts:
+            - name: bpf-maps
+              mountPath: /sys/fs/bpf
+              mountPropagation: Bidirectional
+            - name: cilium-run
+              mountPath: /var/run/cilium
+            - name: config
+              mountPath: /etc/cilium/config
+              readOnly: true
           resources:
             requests:
               memory: "256Mi"
@@ -26,3 +42,15 @@ spec:
             limits:
               memory: "512Mi"
               cpu: "200m"
+      volumes:
+        - name: bpf-maps
+          hostPath:
+            path: /sys/fs/bpf
+            type: DirectoryOrCreate
+        - name: cilium-run
+          hostPath:
+            path: /var/run/cilium
+            type: DirectoryOrCreate
+        - name: config
+          configMap:
+            name: cilium-config
