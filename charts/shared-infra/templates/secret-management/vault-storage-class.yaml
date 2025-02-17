@@ -1,0 +1,60 @@
+{{- if and (ne .Release.Namespace "default") (ne .Release.Namespace "kube-system") }}
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: {{ .Release.Namespace }}
+  annotations:
+    "helm.sh/hook": "pre-install"
+    "helm.sh/hook-weight": "-10"
+{{- end }}
+---
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: vault-storage-{{ .Release.Namespace }}
+  labels: 
+    {{- include "shared-infra.labels" . | nindent 4 }}
+    app.kubernetes.io/managed-by: Helm
+  annotations:
+    meta.helm.sh/release-name: {{ .Release.Name }}
+    meta.helm.sh/release-namespace: {{ .Release.Namespace }}
+provisioner: kubernetes.io/no-provisioner
+volumeBindingMode: WaitForFirstConsumer
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: vault-pv-{{ .Release.Namespace }}
+  labels: 
+    {{- include "shared-infra.labels" . | nindent 4 }}
+    app.kubernetes.io/managed-by: Helm
+  annotations:
+    meta.helm.sh/release-name: {{ .Release.Name }}
+    meta.helm.sh/release-namespace: {{ .Release.Namespace }}
+spec:
+  capacity:
+    storage: 1Gi
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: vault-storage-{{ .Release.Namespace }}
+  hostPath:
+    path: /data/vault/{{ .Release.Namespace }}
+    type: DirectoryOrCreate
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: vault-data
+  namespace: {{ .Release.Namespace }}
+  labels: {{- include "shared-infra.labels" . | nindent 4 }}
+  annotations:
+    "helm.sh/hook": "pre-install"
+    "helm.sh/hook-weight": "-5"
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: vault-storage-{{ .Release.Namespace }}
+  resources:
+    requests:
+      storage: 1Gi

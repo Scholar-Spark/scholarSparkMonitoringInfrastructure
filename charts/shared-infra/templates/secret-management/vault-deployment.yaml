@@ -35,6 +35,12 @@ spec:
               mountPath: /vault/config
             - name: data
               mountPath: /vault/data
+          readinessProbe:
+            httpGet:
+              path: /v1/sys/health
+              port: 8200
+            initialDelaySeconds: 5
+            periodSeconds: 10
       volumes:
         - name: config
           configMap:

@@ -2,7 +2,7 @@ apiVersion: v2
 name: shared-infra
 description: Shared Infrastructure for Scholar Spark Development Environment
 type: application
-version: 0.5.0
+version: 0.5.1
 appVersion: "1.1.0"
 annotations:
   # Add this annotation to document the dependency

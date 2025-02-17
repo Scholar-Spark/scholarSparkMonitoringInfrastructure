@@ -2,7 +2,7 @@ apiVersion: gateway.networking.k8s.io/v1beta1
 kind: Gateway
 metadata:
   name: scholar-spark-gateway
-  namespace: scholar-spark-dev
+  namespace: {{ .Release.Namespace }}
 spec:
   gatewayClassName: cilium
   listeners:

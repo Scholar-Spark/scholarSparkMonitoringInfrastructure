@@ -1,11 +1,13 @@
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: scholar-spark-service-role
-  labels: {{- include "shared-infra.labels" . | nindent 4 }}
+  name: scholar-spark-service-role-{{ .Release.Namespace }}
+  labels:
+    {{- include "shared-infra.labels" . | nindent 4 }}
+    app.kubernetes.io/managed-by: Helm
   annotations:
-    meta.helm.sh/release-namespace: {{ .Release.Namespace }}
     meta.helm.sh/release-name: {{ .Release.Name }}
+    meta.helm.sh/release-namespace: {{ .Release.Namespace }}
 rules:
   - apiGroups: [""]
     resources: ["secrets"]
