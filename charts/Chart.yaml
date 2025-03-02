@@ -1,0 +1,6 @@
+apiVersion: v2
+name: monitoring-infra
+description: Monitoring Infrastructure for Scholar Spark Development Environment
+type: application
+version: 0.5.1
+appVersion: "1.1.0"

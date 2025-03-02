@@ -5,7 +5,9 @@ on:
     branches:
       - master
     paths:
-      - "charts/**"
+      - "Chart.yaml"
+      - "values.yaml"
+      - "templates/**"
       - ".github/workflows/release.yaml"
 
 jobs:
@@ -41,15 +43,15 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Package Helm chart
-        run: helm package charts/shared-infra
+        run: helm package .
 
       - name: Push Chart
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          helm push shared-infra-*.tgz oci://ghcr.io/${GITHUB_REPOSITORY,,}/charts
+          helm push *.tgz oci://ghcr.io/${GITHUB_REPOSITORY,,}/charts
 
       - name: Update Version
         if: success()
         run: |
-          echo "Successfully published chart version $(helm show chart charts/shared-infra | grep version | cut -d' ' -f2)"
+          echo "Successfully published chart version $(helm show chart . | grep version | cut -d' ' -f2)"

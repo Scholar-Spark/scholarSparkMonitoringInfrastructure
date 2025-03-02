@@ -1,0 +1,9 @@
+{{- if and (ne .Release.Namespace "default") (ne .Release.Namespace "kube-system") }}
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: {{ .Release.Namespace }}
+  annotations:
+    "helm.sh/hook": "pre-install"
+    "helm.sh/hook-weight": "-10"
+{{- end }}

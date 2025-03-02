@@ -16,10 +16,35 @@ spec:
         {{- include "shared-infra.labels" . | nindent 8 }}
         app: vault
     spec:
+      securityContext:
+        fsGroup: 100
+        fsGroupChangePolicy: "OnRootMismatch"
       serviceAccountName: vault
       containers:
         - name: vault
           image: vault:1.13.3
+          command: ["vault", "server", "-config=/vault/config/vault.hcl"]
+          env:
+            - name: SKIP_SETCAP
+              value: "true"
+            - name: VAULT_SKIP_VERIFY
+              value: "true"
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: POD_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.podIP
+          securityContext:
+            capabilities:
+              add: 
+                - IPC_LOCK
+                - SETFCAP
+            runAsUser: 100
+            runAsNonRoot: true
+            allowPrivilegeEscalation: true
           ports:
             - containerPort: 8200
               name: http
@@ -45,6 +70,11 @@ spec:
         - name: config
           configMap:
             name: vault-config
+            defaultMode: 0644
+            items:
+              - key: vault.hcl
+                path: vault.hcl
+                mode: 0644
         - name: data
           {{- if and .Values.vault.persistence (eq .Values.vault.persistence.enabled true) }}
           persistentVolumeClaim:
@@ -52,3 +82,5 @@ spec:
           {{- else }}
           emptyDir: {}
           {{- end }}
+      nodeSelector:
+        kubernetes.io/hostname: template-validator-control-plane

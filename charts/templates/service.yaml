@@ -3,9 +3,11 @@ kind: Service
 metadata:
   name: vault
   namespace: {{ .Release.Namespace }}
-  labels: {{- include "shared-infra.labels" . | nindent 4 }}
+  labels:
+    {{- include "shared-infra.labels" . | nindent 4 }}
 spec:
   selector:
+    app: vault
   ports:
     - port: 8200
       targetPort: 8200

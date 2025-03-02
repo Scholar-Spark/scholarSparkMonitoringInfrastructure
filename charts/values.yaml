@@ -1,0 +1,33 @@
+global:
+  environment: development
+  namespace: test-vault
+
+vault:
+  enabled: true
+  server:
+    dev:
+      enabled: true
+    ha:
+      enabled: false
+    injector:
+      enabled: true
+    auth:
+      kubernetes:
+        enabled: true
+  persistence:
+    enabled: true
+
+cilium:
+  hubble:
+    enabled: true
+    ui:
+      enabled: true
+    relay:
+      enabled: true
+  kubeProxyReplacement: strict
+  ingressController:
+    enabled: true
+  tunnel: disabled
+  ipam:
+    mode: kubernetes
+  autoDirectNodeRoutes: true

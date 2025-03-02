@@ -3,7 +3,8 @@ kind: ConfigMap
 metadata:
   name: vault-config
   namespace: {{ .Release.Namespace }}
-  labels: {{- include "shared-infra.labels" . | nindent 4 }}
+  labels:
+    {{- include "shared-infra.labels" . | nindent 4 }}
 data:
   vault.hcl: |
     {{- if eq .Values.global.environment "development" }}
@@ -11,20 +12,41 @@ data:
     listener "tcp" {
       tls_disable = 1
       address = "[::]:8200"
+      cluster_address = "[::]:8201"
     }
     storage "raft" {
       path = "/vault/data"
+      node_id = "vault-${POD_NAME}"
+      retry_join {
+        leader_api_addr = "http://vault:8200"
+      }
+      autopilot {
+        max_lease_duration = "768h"
+        min_lease_duration = "10s"
+        default_lease_ttl = "768h"
+        max_lease_ttl = "768h"
+      }
     }
+    api_addr = "http://${POD_IP}:8200"
+    cluster_addr = "http://${POD_IP}:8201"
+    disable_mlock = true
     {{- else }}
     ui = true
     listener "tcp" {
       tls_disable = 0
       address = "[::]:8200"
-    }
+    # }
     storage "raft" {
       path = "/vault/data"
       node_id = "vault-${POD_NAME}"
+      autopilot {
+        max_lease_duration = "768h"
+        min_lease_duration = "10s"
+        default_lease_ttl = "768h"
+        max_lease_ttl = "768h"
+      }
     }
+    cluster_addr = "https://vault-0.vault-internal:8201"  # Add this line
     seal "awskms" {
       region     = "{{ .Values.vault.seal.region }}"
       kms_key_id = "{{ .Values.vault.seal.keyId }}"
@@ -32,8 +54,9 @@ data:
     auth "kubernetes" {
       role "scholar-spark-service" {
         bound_service_account_names = ["scholar-spark-service"]
-        bound_service_account_namespaces = ["*"]  # Or specific namespaces
+        bound_service_account_namespaces = ["*"]
         policies = ["default", "scholar-spark-policy"]
       }
     }
     {{- end }}
+
