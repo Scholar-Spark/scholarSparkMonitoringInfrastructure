@@ -43,7 +43,7 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Package Helm chart
-        run: helm package .
+        run: helm package ./charts
 
       - name: Push Chart
         env:
